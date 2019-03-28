@@ -4,8 +4,6 @@ Tracks successes and shows random DC for each level. Outputs to a nice box in th
 
 Comments, feedback, suggestions, & pull requests welcome! Reasonable expectations required.
 
-To install 
-
 # Instructions
 
 ## Start a challenge

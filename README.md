@@ -43,7 +43,7 @@ Comments, feedback, suggestions, & pull requests welcome! Reasonable expectation
 * make "bumper" buttons for editing challenge
 * make output all pretty-like with powercards
 
-#Credits:
- * [Robin Kuiper](https://github.com/RobinKuiper/Roll20APIScripts) -- i borrowed heavily from her code for handling inputs, managing state, and setting up listeners. 
+# Credits:
+ * [Robin Kuiper](https://github.com/RobinKuiper/Roll20APIScripts) -- i borrowed heavily from their (amazing) code for handling inputs, managing state, and setting up listeners. 
  * [Critical-Hit.com](https://critical-hits.com/blog/2016/08/16/skill-challenges-in-5th-edition-dd/) -- was inspired by their table
  * All the people who have ansked and answered questions on the Roll20 forums that saved me from pulling my hair out.

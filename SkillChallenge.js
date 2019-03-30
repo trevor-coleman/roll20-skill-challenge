@@ -362,7 +362,7 @@ var SkillChallenge = SkillChallenge || (function () {
           + `{{Failures= [[${challenge.maxFailures - challenge.failures}]] remaining -- ${challenge.failures}/${challenge.maxFailures}}}`
           + `{{Success=${easyButton}\n${mediumButton}\n${hardButton}\n${veryHardButton}}}`
           + `{{Failure=${failureButton}}}`
-          + `{{Options=[Reset](!skillchallenge reset) [Edit](!skillchallenge edit)}}`;
+          + `{{Options=[Reset](!skillchallenge reset) [Edit](!skillchallenge edit) [Random](!skillchallenge random)}}`;
 
         log(menu_string);
 

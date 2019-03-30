@@ -1,5 +1,4 @@
 /*
- * Version 0.0.1
  * Made By Trevor Coleman
  * Roll20: https://app.roll20.net/users/1672428/trevor-c
  * Github: https://github.com/trevor-coleman/roll20-skill-challenge
@@ -13,7 +12,7 @@ var SkillChallenge = SkillChallenge || (function () {
   let whisper;
   let times = 0;
 
-  const version = "0.1.2",
+  const version = "0.1.4",
     script_name = 'SkillChallenge',
     state_name = 'SKILLCHALLENGE',
 
@@ -170,14 +169,14 @@ var SkillChallenge = SkillChallenge || (function () {
             if (args.length) {
               SetChallengeValue(args);
             } else {
-              sendChat(script_name, "Nothing to set.");
+              sendMessage("Nothing to set.");
             }
             break;
           case 'random':
             if (args.length == 2) {
               let heroLevel = args.shift();
               let challengeLevel = args.shift();
-              sendChat('script_name', "makeRandom - " + heroLevel + "-" + challengeLevel);
+              sendMessage("makeRandom - " + heroLevel + "-" + challengeLevel);
               MakeRandomChallenge(heroLevel, challengeLevel);
             }
             else {
@@ -185,14 +184,12 @@ var SkillChallenge = SkillChallenge || (function () {
             }
             break;
           case 'start':
-            SetSuccessesToZero();
+            SetCountsToZero();
             SendSkillChallengeMenu();
             break;
           case 'reset':
             if (!playerIsGM(msg.playerid)) return;
-            state[state_name] = {};
-            setDefaults(true);
-            sendMessage(whisper + "Resetting Skill Challenge");
+            SetCountsToZero();
             SendSkillChallengeMenu();
             break;
           default:
@@ -234,7 +231,7 @@ var SkillChallenge = SkillChallenge || (function () {
         + `{{Very Hard Target=${challenge.veryHardTarget} [Change](!skillchallenge set veryHardTarget ?{How many veryHard successes?})}}`
         + `{{=[RandomChallenge](!skillchallenge random) \n [Start Challenge](!skillchallenge start)}}`;
 
-      sendChat(script_name, whisper + editMenuString);
+      sendMessage(editMenuString);
     },
 
     SetLastMenu = menuName => {
@@ -262,7 +259,7 @@ var SkillChallenge = SkillChallenge || (function () {
         + `}}`
         + `{{[GENERATE](!skillchallenge random ${state[state_name].heroLevel} ${state[state_name].challengeLevel})=}}`;
 
-      sendChat(script_name, whisper + randomChallengeMenuString);
+      sendMessage(randomChallengeMenuString);
 
     },
 
@@ -341,36 +338,31 @@ var SkillChallenge = SkillChallenge || (function () {
       if (!CheckIfComplete()) {
         let challenge = state[state_name].challenge
 
-        let easyButton = "[Easy Success](!skillchallenge easysuccess)";
-        let mediumButton = "[Medium Success](!skillchallenge mediumsuccess)";
-        let hardButton = "[Hard Success](!skillchallenge hardsuccess)";
-        let veryHardButton = "[Very Hard Success](!skillchallenge veryhardsuccess)";
-        let failureButton = "[Failure](!skillchallenge failure)";
+        let easyButton = challenge.easyTarget == challenge.easySuccess ? "✓" : "[✓ ](!skillchallenge easysuccess)";
+        let mediumButton = "[✪](!skillchallenge mediumsuccess)";
+        let hardButton = "[✪](!skillchallenge hardsuccess)";
+        let veryHardButton = "[✪](!skillchallenge veryhardsuccess)";
+        let failureButton = "[☠︎](!skillchallenge failure)";
 
-        let easyRoll = "[[1d5+7]]"
-        let mediumRoll = "[[1d5+12]]"
-        let hardRoll = "[[1d5+17]]"
-        let veryHardRoll = "[[1d5+22]]"
+        let easyRoll = "1d5cs>6cf<0+7"
+        let mediumRoll = "1d5cs>6cf<0+12"
+        let hardRoll = "1d5cs>6cf<0+17"
+        let veryHardRoll = "1d5cs>6cf<0+22"
+        let crit = "1d1cs>1cf<0*"
+        let fail = "1d1cs>2*"
+
 
         //${challenge.easySuccess == challenge.easyTarget ? ">0" : ""}
         // var menu_string = `!power {{ --txcolor|#FFFFFF --bgcolor|#AD3B3B --orowbg|#FFFFFF --erowbg|#FFFFFF --name|Skill Challenge --Easy|${easySuccess} / ${easyTarget} --!buttons|[Record Easy](!skillchallenge easysuccess)}}`
-        let menu_string = whisper + `&{template:default} {{name=Skill Challenge}}`
-          + `{{Easy=[[${challenge.easyTarget - challenge.easySuccess}]] needed -- ${challenge.easySuccess}/${challenge.easyTarget} -- DC${easyRoll}}}`
-          + `{{Medium=[[${challenge.mediumTarget - challenge.mediumSuccess}]] needed -- ${challenge.mediumSuccess}/${challenge.mediumTarget} -- DC${mediumRoll}}}`
-          + `{{Hard=[[${challenge.hardTarget - challenge.hardSuccess}]] needed -- ${challenge.hardSuccess}/${challenge.hardTarget} -- DC${hardRoll}}}`
-          + `{{Very Hard=[[${challenge.veryHardTarget - challenge.veryHardSuccess}]] needed -- ${challenge.veryHardSuccess}/${challenge.veryHardTarget} -- DC${veryHardRoll}}}`
-          + `{{Failures= [[${challenge.maxFailures - challenge.failures}]] remaining -- ${challenge.failures}/${challenge.maxFailures}}}`
-          + `{{Success=${easyButton}\n${mediumButton}\n${hardButton}\n${veryHardButton}}}`
-          + `{{Failure=${failureButton}}}`
+        let menu_string = `&{template:default} {{name=Skill Challenge}}`
+          + `{{Easy=[[${crit}${challenge.easyTarget - challenge.easySuccess}]] ${easyButton} -- **DC[[${easyRoll}]]**}}`
+          + `{{Medium=[[${crit}${challenge.mediumTarget - challenge.mediumSuccess}]] ${mediumButton} -- **DC[[${mediumRoll}]]**}}`
+          + `{{Hard=[[${crit}${challenge.hardTarget - challenge.hardSuccess}]] ${hardButton} -- **DC[[${hardRoll}]]**}}`
+          + `{{Very Hard=[[${crit}${challenge.veryHardTarget - challenge.veryHardSuccess}]] ${veryHardButton} -- **DC[[${veryHardRoll}]]**}}`
+          + `{{Failures= [[${fail}${challenge.maxFailures - challenge.failures}]] ${failureButton} -- ${challenge.failures}/${challenge.maxFailures}}}`
           + `{{Options=[Reset](!skillchallenge reset) [Edit](!skillchallenge edit) [Random](!skillchallenge random)}}`;
 
-        log(menu_string);
-
-        try {
-          sendChat(script_name, menu_string);
-        } catch (error) {
-          log(error)
-        }
+        sendMessage(menu_string);
       }
     },
 
@@ -390,11 +382,12 @@ var SkillChallenge = SkillChallenge || (function () {
       }
     },
 
-    SetSuccessesToZero = () => {
+    SetCountsToZero = () => {
       state[state_name].challenge.easySuccess = 0;
       state[state_name].challenge.mediumSuccess = 0;
       state[state_name].challenge.hardSuccess = 0;
       state[state_name].challenge.veryhardSuccess = 0;
+      state[state_name].challenge.failures = 0;
     },
 
     SetTargetsToZero = () => {
@@ -405,7 +398,11 @@ var SkillChallenge = SkillChallenge || (function () {
     },
 
     sendMessage = (message) => {
-      sendChat(script_name, message);
+      try {
+        sendChat(script_name, whisper + message);
+      } catch (error) {
+        log(error)
+      }
     },
 
     SetChallengeValue = (args) => {

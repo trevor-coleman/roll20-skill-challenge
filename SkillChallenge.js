@@ -16,6 +16,24 @@ var SkillChallenge = SkillChallenge || (function () {
   const version = "0.1.2",
     script_name = 'SkillChallenge',
     state_name = 'SKILLCHALLENGE',
+
+    //HERO_LEVELS
+    LOCAL_HEROES = "localHeroes",
+    HEROES_OF_THE_REALM = "heroesOfTheRealm",
+    MASTERS_OF_THE_REALM = "mastersOfTheRealm",
+    MASTERS_OF_THE_WORLD = "mastersOfTheWorld",
+
+    //CHALLENGE LEVELS
+    EASY_CHALLENGE = "easy",
+    MODERATE_CHALLENGE = "moderate",
+    HARD_CHALLENGE = "hard",
+
+    //MENUS
+    SKILL_CHALLENGE_MENU = 1,
+    RANDOM_CHALLENGE_MENU = 2,
+    EDIT_MENU = 3,
+
+    //DIFFICULTY POINTS
     EASY = "1",
     MEDIUM = "2",
     HARD = "3",
@@ -53,6 +71,21 @@ var SkillChallenge = SkillChallenge || (function () {
       mastersOfTheRealm: {
         easy: {
           possibleValues: [MEDIUM],
+          difficultyPoints: [6, 8]
+        },
+        moderate: {
+          possibleValues: [MEDIUM, HARD],
+          difficultyPoints: [10, 12],
+        },
+
+        hard: {
+          possibleValues: [MEDIUM, HARD],
+          difficultyPoints: [14, 20]
+        }
+      },
+      mastersOfTheWorld: {
+        easy: {
+          possibleValues: [MEDIUM],
           difficultyPoints: [6, 12]
         },
         moderate: {
@@ -76,6 +109,10 @@ var SkillChallenge = SkillChallenge || (function () {
       let extracommand = args.shift();
 
       if (command === state[state_name].config.command) {
+        log("Parsing ---- ")
+        log(extracommand),
+          log(args)
+        log("---")
         switch (extracommand) {
           case 'test':
             if (!playerIsGM(msg.playerid)) return;
@@ -126,8 +163,8 @@ var SkillChallenge = SkillChallenge || (function () {
                 : state[state_name].challenge.failures;
             SendSkillChallengeMenu();
             break;
-          case 'config':
-            SendConfigMenu();
+          case 'edit':
+            SendEditMenu();
             break;
           case 'set':
             if (args.length) {
@@ -144,8 +181,9 @@ var SkillChallenge = SkillChallenge || (function () {
               MakeRandomChallenge(heroLevel, challengeLevel);
             }
             else {
-              sendChat('script_name', "random requires exactly 2 arguments - heroLevel and challengeLevel")
+              SendRandomChallengeMenu();
             }
+            break;
           case 'start':
             SetSuccessesToZero();
             SendSkillChallengeMenu();
@@ -158,6 +196,7 @@ var SkillChallenge = SkillChallenge || (function () {
             SendSkillChallengeMenu();
             break;
           default:
+            log("default");
             SendSkillChallengeMenu();
             break;
         }
@@ -184,12 +223,76 @@ var SkillChallenge = SkillChallenge || (function () {
 
 
     },
-    SendConfigMenu = () => {
+
+    SendEditMenu = () => {
+      SetLastMenu(EDIT_MENU);
       let challenge = state[state_name].challenge;
-      let setupMenuString = whisper + `&{template:default} {{name=Config}} {{Easy Target=${challenge.easyTarget} [Change](!skillchallenge set easyTarget ?{How many easy successes?})}} {{Medium Target=${challenge.mediumTarget} [Change](!skillchallenge set mediumTarget ?{How many medium successes?})}} {{Hard Target=${challenge.hardTarget} [Change](!skillchallenge set hardTarget ?{How many hard successes?})}} {{Very Hard Target=${challenge.veryHardTarget} [Change](!skillchallenge set veryHardTarget ?{How many veryHard successes?})}} {{Options= [Start Challenge](!skillchallenge start)}}`
-      sendChat(script_name, setupMenuString);
+      let editMenuString = `&{template:default} {{name=Edit Challenge}}`
+        + `{{Easy Target=${challenge.easyTarget} [Change](!skillchallenge set easyTarget ?{How many easy successes?})}}`
+        + `{{Medium Target=${challenge.mediumTarget} [Change](!skillchallenge set mediumTarget ?{How many medium successes?})}}`
+        + `{{Hard Target=${challenge.hardTarget} [Change](!skillchallenge set hardTarget ?{How many hard successes?})}}`
+        + `{{Very Hard Target=${challenge.veryHardTarget} [Change](!skillchallenge set veryHardTarget ?{How many veryHard successes?})}}`
+        + `{{=[RandomChallenge](!skillchallenge random) \n [Start Challenge](!skillchallenge start)}}`;
+
+      sendChat(script_name, whisper + editMenuString);
     },
 
+    SetLastMenu = menuName => {
+      state[state_name].lastMenu = menuName;
+    },
+
+    SendRandomChallengeMenu = () => {
+      SetLastMenu(RANDOM_CHALLENGE_MENU);
+      log("===>" + state[state_name].heroLevel)
+
+      let selectedHeroLevelString = `>>**${HeroLevelString(state[state_name].heroLevel)}**<<\n`
+      let selectedChallengeLevelString = `>>**${ChallengeLevelString(state[state_name].challengeLevel)}**<<\n`
+
+      let randomChallengeMenuString = `&{template:default} {{name=Random Challenge}}`
+        + `{{Level=`
+        + (state[state_name].heroLevel == LOCAL_HEROES ? selectedHeroLevelString : `[${HeroLevelString(LOCAL_HEROES)}](!skillchallenge set heroLevel ${LOCAL_HEROES})\n`)
+        + (state[state_name].heroLevel == HEROES_OF_THE_REALM ? selectedHeroLevelString : `[${HeroLevelString(HEROES_OF_THE_REALM)}](!skillchallenge set heroLevel ${HEROES_OF_THE_REALM})\n`)
+        + (state[state_name].heroLevel == MASTERS_OF_THE_REALM ? selectedHeroLevelString : `[${HeroLevelString(MASTERS_OF_THE_REALM)}](!skillchallenge set heroLevel ${MASTERS_OF_THE_REALM})\n`)
+        + (state[state_name].heroLevel == MASTERS_OF_THE_WORLD ? selectedHeroLevelString : `[${HeroLevelString(MASTERS_OF_THE_WORLD)}](!skillchallenge set heroLevel ${MASTERS_OF_THE_WORLD})\n`)
+        + `}}`
+        + `{{Challenge=`
+        + (state[state_name].challengeLevel == EASY_CHALLENGE ? selectedChallengeLevelString : `[${ChallengeLevelString(EASY_CHALLENGE)}](!skillchallenge set challengeLevel ${EASY_CHALLENGE})\n`)
+        + (state[state_name].challengeLevel == MODERATE_CHALLENGE ? selectedChallengeLevelString : `[${ChallengeLevelString(MODERATE_CHALLENGE)}](!skillchallenge set challengeLevel ${MODERATE_CHALLENGE})\n`)
+        + (state[state_name].challengeLevel == HARD_CHALLENGE ? selectedChallengeLevelString : `[${ChallengeLevelString(HARD_CHALLENGE)}](!skillchallenge set challengeLevel ${HARD_CHALLENGE})`)
+        + `}}`
+        + `{{[GENERATE](!skillchallenge random ${state[state_name].heroLevel} ${state[state_name].challengeLevel})=}}`;
+
+      sendChat(script_name, whisper + randomChallengeMenuString);
+
+    },
+
+    HeroLevelString = heroLevel => {
+      switch (heroLevel) {
+        case LOCAL_HEROES:
+          return "1-5";
+        case HEROES_OF_THE_REALM:
+          return "6-10";
+        case MASTERS_OF_THE_REALM:
+          return "11-15";
+        case MASTERS_OF_THE_WORLD:
+          return "16-20";
+        default:
+          return "Not Set";
+      }
+    },
+
+    ChallengeLevelString = challengeLevel => {
+      switch (challengeLevel) {
+        case EASY_CHALLENGE:
+          return "Easy";
+        case MODERATE_CHALLENGE:
+          return "Moderate";
+        case HARD_CHALLENGE:
+          return "Hard Challenge";
+        default:
+          return "Not Set";
+      }
+    },
 
     MakeRandomChallenge = (heroLevel, challengeLevel) => {
       let preset = difficultyPresets[heroLevel][challengeLevel];
@@ -233,6 +336,7 @@ var SkillChallenge = SkillChallenge || (function () {
     },
 
     SendSkillChallengeMenu = () => {
+      SetLastMenu(SKILL_CHALLENGE_MENU);
 
       if (!CheckIfComplete()) {
         let challenge = state[state_name].challenge
@@ -248,13 +352,41 @@ var SkillChallenge = SkillChallenge || (function () {
         let hardRoll = "[[1d5+17]]"
         let veryHardRoll = "[[1d5+22]]"
 
+        //${challenge.easySuccess == challenge.easyTarget ? ">0" : ""}
         // var menu_string = `!power {{ --txcolor|#FFFFFF --bgcolor|#AD3B3B --orowbg|#FFFFFF --erowbg|#FFFFFF --name|Skill Challenge --Easy|${easySuccess} / ${easyTarget} --!buttons|[Record Easy](!skillchallenge easysuccess)}}`
-        let menu_string = whisper + `&{template:default} {{name=Skill Challenge}} {{Easy=${challenge.easySuccess}/${challenge.easyTarget} ${easyRoll}}} {{Medium=${challenge.mediumSuccess}/${challenge.mediumTarget} ${mediumRoll}}} {{Hard=${challenge.hardSuccess}/${challenge.hardTarget} ${hardRoll}}} {{Very Hard=${challenge.veryHardSuccess}/${challenge.veryHardTarget} ${veryHardRoll}}} {{Failures=${challenge.failures}/${challenge.maxFailures}}} {{Success=${easyButton}\n${mediumButton}\n${hardButton}\n${veryHardButton}}} {{Failure=${failureButton}}} {{Options=[Reset](!skillchallenge reset) [Config](!skillchallenge config)}}`;
+        let menu_string = whisper + `&{template:default} {{name=Skill Challenge}}`
+          + `{{Easy=[[${challenge.easyTarget - challenge.easySuccess}]] needed -- ${challenge.easySuccess}/${challenge.easyTarget} -- DC${easyRoll}}}`
+          + `{{Medium=[[${challenge.mediumTarget - challenge.mediumSuccess}]] needed -- ${challenge.mediumSuccess}/${challenge.mediumTarget} -- DC${mediumRoll}}}`
+          + `{{Hard=[[${challenge.hardTarget - challenge.hardSuccess}]] needed -- ${challenge.hardSuccess}/${challenge.hardTarget} -- DC${hardRoll}}}`
+          + `{{Very Hard=[[${challenge.veryHardTarget - challenge.veryHardSuccess}]] needed -- ${challenge.veryHardSuccess}/${challenge.veryHardTarget} -- DC${veryHardRoll}}}`
+          + `{{Failures= [[${challenge.maxFailures - challenge.failures}]] remaining -- ${challenge.failures}/${challenge.maxFailures}}}`
+          + `{{Success=${easyButton}\n${mediumButton}\n${hardButton}\n${veryHardButton}}}`
+          + `{{Failure=${failureButton}}}`
+          + `{{Options=[Reset](!skillchallenge reset) [Edit](!skillchallenge edit)}}`;
+
+        log(menu_string);
+
         try {
           sendChat(script_name, menu_string);
         } catch (error) {
           log(error)
         }
+      }
+    },
+
+    SendMenu = menuName => {
+      log("Send Menu " + menuName)
+      switch (menuName) {
+        case EDIT_MENU:
+          SendEditMenu();
+          break;
+        case RANDOM_CHALLENGE_MENU:
+          SendRandomChallengeMenu();
+          break;
+        case SKILL_CHALLENGE_MENU:
+          SendSkillChallengeMenu();
+        default:
+          break;
       }
     },
 
@@ -280,9 +412,14 @@ var SkillChallenge = SkillChallenge || (function () {
       let property = args.shift()
       let value = args.shift()
 
-      state[state_name].challenge[property] = value;
+      if (property == "heroLevel" || property == "challengeLevel") {
+        state[state_name][property] = value;
+      } else {
 
-      SendConfigMenu();
+        state[state_name].challenge[property] = value;
+      }
+      log(state[state_name].lastMenu)
+      SendMenu(state[state_name].lastMenu);
     },
 
     checkInstall = () => {
@@ -320,7 +457,10 @@ var SkillChallenge = SkillChallenge || (function () {
           nearlyImpossibleTarget: 0,
           failures: 0,
           maxFailures: 3,
-        }
+        },
+        lastMenu: SKILL_CHALLENGE_MENU,
+        heroLevel: LOCAL_HEROES,
+        challengeLevel: MODERATE_CHALLENGE,
       };
 
       if (!state[state_name].config) {
@@ -336,6 +476,15 @@ var SkillChallenge = SkillChallenge || (function () {
           state[state_name].config.sendOnlyToGM = defaults.config.sendOnlyToGM;
         }
       }
+      if (!state[state_name].hasOwnProperty('lastMenu')) {
+        state[state_name].lastMenu = defaults.lastMenu;
+      }
+      if (!state[state_name].hasOwnProperty('challengeLevel')) {
+        state[state_name].challengeLevel = defaults.challengeLevel;
+      }
+      if (!state[state_name].hasOwnProperty('heroLevel')) {
+        state[state_name].heroLevel = defaults.heroLevel;
+      }
 
       if (!state[state_name].challenge || typeof state[state_name].challenge !== 'object') {
         state[state_name].challenge = defaults.challenge;
@@ -345,7 +494,7 @@ var SkillChallenge = SkillChallenge || (function () {
       whisper = (state[state_name].config.sendOnlyToGM) ? '/w gm ' : '';
 
       if (!state[state_name].config.hasOwnProperty('firsttime') && !reset) {
-        SendSkillChallengeMenu()
+        SendEditMenu();
         state[state_name].config.firsttime = false;
       }
     };

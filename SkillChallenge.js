@@ -13,7 +13,7 @@ var SkillChallenge = SkillChallenge || (function () {
   let whisper;
   let times = 0;
 
-  const version = "0.1.1",
+  const version = "0.1.2",
     script_name = 'SkillChallenge',
     state_name = 'SKILLCHALLENGE',
     EASY = "1",
@@ -83,7 +83,6 @@ var SkillChallenge = SkillChallenge || (function () {
             break;
           case 'easysuccess':
             if (!playerIsGM(msg.playerid)) return;
-            log("@@@@ - easy success")
             state[state_name].challenge.easySuccess++;
             state[state_name].challenge.easySuccess =
               state[state_name].challenge.easySuccess > state[state_name].challenge.easyTarget
@@ -93,7 +92,6 @@ var SkillChallenge = SkillChallenge || (function () {
             break;
           case 'mediumsuccess':
             if (!playerIsGM(msg.playerid)) return;
-            log("@@@@ - medium success")
             state[state_name].challenge.mediumSuccess++;
             state[state_name].challenge.mediumSuccess =
               state[state_name].challenge.mediumSuccess > state[state_name].challenge.mediumTarget
@@ -103,7 +101,6 @@ var SkillChallenge = SkillChallenge || (function () {
             break;
           case 'hardsuccess':
             if (!playerIsGM(msg.playerid)) return;
-            log("@@@@ - hard success")
             state[state_name].challenge.hardSuccess++;
             state[state_name].challenge.hardSuccess =
               state[state_name].challenge.hardSuccess >= state[state_name].challenge.hardTarget
@@ -113,7 +110,6 @@ var SkillChallenge = SkillChallenge || (function () {
             break;
           case 'veryhardsuccess':
             if (!playerIsGM(msg.playerid)) return;
-            log("@@@@ - veryHard success")
             state[state_name].challenge.veryHardSuccess++;
             state[state_name].challenge.veryHardSuccess =
               state[state_name].challenge.veryHardSuccess >= state[state_name].challenge.veryHardTarget
@@ -158,7 +154,7 @@ var SkillChallenge = SkillChallenge || (function () {
             if (!playerIsGM(msg.playerid)) return;
             state[state_name] = {};
             setDefaults(true);
-            sendMessage("Reset Challenge");
+            sendMessage(whisper + "Resetting Skill Challenge");
             SendSkillChallengeMenu();
             break;
           default:
@@ -254,11 +250,8 @@ var SkillChallenge = SkillChallenge || (function () {
 
         // var menu_string = `!power {{ --txcolor|#FFFFFF --bgcolor|#AD3B3B --orowbg|#FFFFFF --erowbg|#FFFFFF --name|Skill Challenge --Easy|${easySuccess} / ${easyTarget} --!buttons|[Record Easy](!skillchallenge easysuccess)}}`
         let menu_string = whisper + `&{template:default} {{name=Skill Challenge}} {{Easy=${challenge.easySuccess}/${challenge.easyTarget} ${easyRoll}}} {{Medium=${challenge.mediumSuccess}/${challenge.mediumTarget} ${mediumRoll}}} {{Hard=${challenge.hardSuccess}/${challenge.hardTarget} ${hardRoll}}} {{Very Hard=${challenge.veryHardSuccess}/${challenge.veryHardTarget} ${veryHardRoll}}} {{Failures=${challenge.failures}/${challenge.maxFailures}}} {{Success=${easyButton}\n${mediumButton}\n${hardButton}\n${veryHardButton}}} {{Failure=${failureButton}}} {{Options=[Reset](!skillchallenge reset) [Config](!skillchallenge config)}}`;
-        log("MENUSTRING----  ");
-        log(menu_string);
         try {
           sendChat(script_name, menu_string);
-          log("sent " + times++ + " times");
         } catch (error) {
           log(error)
         }
